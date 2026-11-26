@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Event Management & Resource Optimization Platform</title>
+<style>
+:root{--navy:#14213d;--blue:#2563eb;--bg:#f3f6fb;--ink:#172033;--muted:#64748b;--line:#e2e8f0}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--ink)}
+header{background:var(--navy);color:white;padding:22px 5%;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+header h1{font-size:21px;margin:0 0 5px}header p{margin:0;color:#cbd5e1;font-size:13px}
+button{border:0;border-radius:8px;padding:10px 14px;background:var(--blue);color:white;font-weight:600;cursor:pointer}
+button:hover{filter:brightness(.93)}button.secondary{background:#475569}button.danger{background:#dc2626}button.success{background:#15803d}button.small{padding:6px 9px;font-size:12px}
+main{max-width:1100px;margin:28px auto;padding:0 18px}.panel{background:white;border:1px solid var(--line);border-radius:14px;padding:22px;margin-bottom:20px;box-shadow:0 4px 18px #0f172a08}
+h2{margin:0 0 16px;font-size:20px}h3{margin:0 0 12px;font-size:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
+input,select{width:100%;padding:11px;border:1px solid #cbd5e1;border-radius:8px;font:inherit;margin:6px 0 12px;background:white}
+label{font-size:13px;font-weight:600;color:#334155}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.hidden{display:none!important}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}.tabs button{background:#e2e8f0;color:#1e293b}.tabs button.active{background:var(--blue);color:white}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;padding:11px;border-bottom:1px solid var(--line);vertical-align:top}th{background:#f8fafc;color:#475569}
+.table-wrap{overflow-x:auto}.status{display:inline-block;padding:4px 8px;border-radius:20px;font-size:12px;font-weight:700}.Pending{background:#fef3c7;color:#92400e}.Approved{background:#dcfce7;color:#166534}.Rejected{background:#fee2e2;color:#991b1b}
+.notice{padding:11px 13px;border-radius:8px;background:#eff6ff;color:#1e40af;margin:12px 0;font-size:14px}.error{background:#fef2f2;color:#991b1b}.success-msg{background:#f0fdf4;color:#166534}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px}.stat{background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:15px}.stat strong{font-size:25px;display:block;color:var(--blue)}.stat span{font-size:12px;color:var(--muted)}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:20px}
+@media(max-width:600px){header{padding:18px}main{margin:18px auto}.panel{padding:16px}th,td{padding:8px;font-size:12px}}
+</style>
+</head>
+<body>
+<header>
+ <div><h1>Event Management System</h1><p>Resource Optimization Platform</p></div>
+ <div id="userBar" class="hidden"><span id="who"></span> <button class="secondary small" onclick="logout()">Logout</button></div>
+</header>
+<main>
+<section id="loginView" class="panel">
+ <h2>Welcome</h2><p>Choose your portal and sign in.</p>
+ <div class="grid">
+  <div><h3>Admin Login</h3><label>Username</label><input id="adminUser" placeholder="Enter admin username"><label>Password</label><input id="adminPass" type="password" placeholder="Enter password"><button onclick="login('admin')">Login as Admin</button></div>
+  <div><h3>Student Login</h3><label>Username</label><input id="studentUser" placeholder="Enter student username"><label>Password</label><input id="studentPass" type="password" placeholder="Enter password"><button onclick="login('student')">Login as Student</button></div>
+ </div>
+ <div id="loginMsg" aria-live="polite"></div>
+ <div class="notice">Demo credentials: Admin <b>Prince / Rawal</b> · Student <b>Piyush / Rathore</b></div>
+</section>
+
+<section id="appView" class="hidden">
+ <div class="panel">
+  <div class="cards">
+   <div class="stat"><strong id="eventCount">0</strong><span>Total Events</span></div>
+   <div class="stat"><strong id="resourceCount">0</strong><span>Resources</span></div>
+   <div class="stat"><strong id="bookingCount">0</strong><span>Booking Requests</span></div>
+   <div class="stat"><strong id="pendingCount">0</strong><span>Pending Requests</span></div>
+  </div>
+  <div id="adminTabs" class="tabs hidden">
+   <button class="active" onclick="showTab('eventsAdmin',this)">Events</button>
+   <button onclick="showTab('resourcesAdmin',this)">Resources</button>
+   <button onclick="showTab('bookingsAdmin',this)">Manage Bookings</button>
+  </div>
+  <div id="studentTabs" class="tabs hidden">
+   <button class="active" onclick="showTab('eventsStudent',this)">View Events</button>
+   <button onclick="showTab('resourcesStudent',this)">View Resources</button>
+   <button onclick="showTab('bookStudent',this)">Request Booking</button>
+   <button onclick="showTab('myBookings',this)">My Requests</button>
+  </div>
+
+  <div id="eventsAdmin" class="tabContent">
+   <h2>Admin Dashboard – Events</h2>
+   <form id="eventForm" onsubmit="saveEvent(event)">
+    <input type="hidden" id="editEventId">
+    <div class="grid"><div><label>Event Name</label><input id="eventName" required maxlength="50" placeholder="e.g. Tech Fest"></div><div><label>Date</label><input id="eventDate" type="date" required></div><div><label>Venue</label><input id="eventVenue" required maxlength="50" placeholder="e.g. Seminar Hall"></div></div>
+    <button id="eventSubmit">Add Event</button> <button type="button" class="secondary" onclick="resetEventForm()">Clear</button>
+   </form><div id="eventsAdminList"></div>
+  </div>
+  <div id="resourcesAdmin" class="tabContent hidden">
+   <h2>Manage Resources</h2>
+   <form onsubmit="addResource(event)"><label>Resource Name</label><input id="resourceName" required maxlength="50" placeholder="e.g. Projector"><button>Add Resource</button></form>
+   <div id="resourcesAdminList"></div>
+  </div>
+  <div id="bookingsAdmin" class="tabContent hidden"><h2>Booking Requests</h2><div id="adminBookingList"></div></div>
+
+  <div id="eventsStudent" class="tabContent hidden"><h2>Available Events</h2><div id="eventsStudentList"></div></div>
+  <div id="resourcesStudent" class="tabContent hidden"><h2>Available Resources</h2><div id="resourcesStudentList"></div></div>
+  <div id="bookStudent" class="tabContent hidden">
+   <h2>Request Resource Booking</h2>
+   <form onsubmit="requestBooking(event)">
+    <label>Resource</label><select id="bookResource" required></select>
+    <label>Your Name</label><input id="bookName" required maxlength="50" placeholder="Student name">
+    <label>Booking Date</label><input id="bookDate" type="date" required>
+    <div class="grid"><div><label>Starting Hour (0–23)</label><input id="startHour" type="number" min="0" max="23" required></div><div><label>Ending Hour (1–24)</label><input id="endHour" type="number" min="1" max="24" required></div></div>
+    <button>Submit Booking Request</button>
+   </form><div id="bookingMsg" aria-live="polite"></div>
+  </div>
+  <div id="myBookings" class="tabContent hidden"><h2>My Booking Requests</h2><div id="myBookingList"></div></div>
+ </div>
+</section>
+</main>
+<footer>Event Management & Resource Optimization Platform · Browser demo</footer>
+<script>
+const STORE='eventResourcePlatform_v1';
+let data=loadData(), currentRole=null, currentUser='';
+function loadData(){try{return JSON.parse(localStorage.getItem(STORE))||{events:[],resources:[],bookings:[]}}catch{return{events:[],resources:[],bookings:[]}}}
+function saveData(){localStorage.setItem(STORE,JSON.stringify(data));renderAll()}
+function nextId(items){return items.reduce((m,x)=>Math.max(m,x.id),0)+1}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function message(id,text,kind='notice'){document.getElementById(id).innerHTML=`<div class="notice ${kind}">${esc(text)}</div>`}
+function login(role){
+ const u=document.getElementById(role+'User').value.trim(),p=document.getElementById(role+'Pass').value;
+ const ok=role==='admin'?(u==='Prince'&&p==='Rawal'):(u==='Piyush'&&p==='Rathore');
+ if(!ok){message('loginMsg','Invalid '+role+' login!','error');return}
+ currentRole=role;currentUser=u;
+ document.getElementById('loginView').classList.add('hidden');document.getElementById('appView').classList.remove('hidden');document.getElementById('userBar').classList.remove('hidden');
+ document.getElementById('who').textContent='Signed in: '+u+' ('+role+')';
+ document.getElementById('adminTabs').classList.toggle('hidden',role!=='admin');document.getElementById('studentTabs').classList.toggle('hidden',role!=='student');
+ document.querySelectorAll('.tabContent').forEach(x=>x.classList.add('hidden'));
+ document.getElementById(role==='admin'?'eventsAdmin':'eventsStudent').classList.remove('hidden');
+ document.querySelectorAll('.tabs button').forEach((b,i)=>b.classList.toggle('active',i===0));renderAll();
+}
+function logout(){currentRole=null;currentUser='';document.getElementById('appView').classList.add('hidden');document.getElementById('userBar').classList.add('hidden');document.getElementById('loginView').classList.remove('hidden');document.getElementById('adminUser').value='';document.getElementById('adminPass').value='';document.getElementById('studentUser').value='';document.getElementById('studentPass').value=''}
+function showTab(id,btn){document.querySelectorAll('.tabContent').forEach(x=>x.classList.add('hidden'));document.getElementById(id).classList.remove('hidden');btn.parentElement.querySelectorAll('button').forEach(x=>x.classList.remove('active'));btn.classList.add('active');renderAll()}
+function table(headers,rows){if(!rows.length)return '<p class="notice">No records available.</p>';return '<div class="table-wrap"><table><thead><tr>'+headers.map(h=>'<th>'+h+'</th>').join('')+'</tr></thead><tbody>'+rows.join('')+'</tbody></table></div>'}
+function renderAll(){
+ document.getElementById('eventCount').textContent=data.events.length;document.getElementById('resourceCount').textContent=data.resources.length;document.getElementById('bookingCount').textContent=data.bookings.length;document.getElementById('pendingCount').textContent=data.bookings.filter(b=>b.status==='Pending').length;
+ const eventRows=data.events.map(e=>`<tr><td>${e.id}</td><td>${esc(e.name)}</td><td>${esc(e.date)}</td><td>${esc(e.venue)}</td><td><div class="actions"><button class="small" onclick="editEvent(${e.id})">Edit</button><button class="small danger" onclick="deleteEvent(${e.id})">Delete</button></div></td></tr>`);
+ document.getElementById('eventsAdminList').innerHTML=table(['ID','Event','Date','Venue','Actions'],eventRows);
+ const simpleEvents=data.events.map(e=>`<tr><td>${e.id}</td><td>${esc(e.name)}</td><td>${esc(e.date)}</td><td>${esc(e.venue)}</td></tr>`);
+ document.getElementById('eventsStudentList').innerHTML=table(['ID','Event','Date','Venue'],simpleEvents);
+ const resRows=data.resources.map(r=>`<tr><td>${r.id}</td><td>${esc(r.name)}</td></tr>`);
+ document.getElementById('resourcesAdminList').innerHTML=table(['ID','Resource'],resRows);
+ document.getElementById('resourcesStudentList').innerHTML=table(['ID','Resource'],resRows);
+ document.getElementById('bookResource').innerHTML='<option value="">Select a resource</option>'+data.resources.map(r=>`<option value="${r.id}">${r.id} – ${esc(r.name)}</option>`).join('');
+ const bRows=data.bookings.map(b=>`<tr><td>${b.id}</td><td>${esc(b.student)}</td><td>${esc(data.resources.find(r=>r.id===b.resourceId)?.name||'Deleted resource')}</td><td>${esc(b.date)}</td><td>${String(b.start).padStart(2,'0')}:00 – ${String(b.end).padStart(2,'0')}:00</td><td><span class="status ${b.status}">${b.status}</span></td><td>${b.status==='Pending'?`<div class="actions"><button class="small success" onclick="processBooking(${b.id},'Approved')">Approve</button><button class="small danger" onclick="processBooking(${b.id},'Rejected')">Reject</button></div>`:'—'}</td></tr>`);
+ document.getElementById('adminBookingList').innerHTML=table(['ID','Student','Resource','Date','Time','Status','Action'],bRows);
+ const mine=data.bookings.filter(b=>b.student.toLowerCase()===currentUser.toLowerCase()).map(b=>`<tr><td>${b.id}</td><td>${esc(data.resources.find(r=>r.id===b.resourceId)?.name||'Deleted resource')}</td><td>${esc(b.date)}</td><td>${b.start}:00 – ${b.end}:00</td><td><span class="status ${b.status}">${b.status}</span></td></tr>`);
+ document.getElementById('myBookingList').innerHTML=table(['ID','Resource','Date','Time','Status'],mine);
+}
+function saveEvent(ev){ev.preventDefault();const id=Number(document.getElementById('editEventId').value),obj={name:document.getElementById('eventName').value.trim(),date:document.getElementById('eventDate').value,venue:document.getElementById('eventVenue').value.trim()};if(id){Object.assign(data.events.find(e=>e.id===id),obj)}else data.events.push({id:nextId(data.events),...obj});resetEventForm();saveData()}
+function editEvent(id){const e=data.events.find(x=>x.id===id);if(!e)return;document.getElementById('editEventId').value=e.id;document.getElementById('eventName').value=e.name;document.getElementById('eventDate').value=e.date;document.getElementById('eventVenue').value=e.venue;document.getElementById('eventSubmit').textContent='Update Event';document.getElementById('eventForm').scrollIntoView({behavior:'smooth'})}
+function resetEventForm(){document.getElementById('eventForm').reset();document.getElementById('editEventId').value='';document.getElementById('eventSubmit').textContent='Add Event'}
+function deleteEvent(id){if(confirm('Delete this event?')){data.events=data.events.filter(e=>e.id!==id);saveData()}}
+function addResource(ev){ev.preventDefault();const name=document.getElementById('resourceName').value.trim();if(!name)return;data.resources.push({id:nextId(data.resources),name});ev.target.reset();saveData()}
+function conflict(rid,date,start,end,ignoreId=null){return data.bookings.some(b=>b.id!==ignoreId&&b.resourceId===rid&&b.date===date&&b.status!=='Rejected'&&start<b.end&&b.start<end)}
+function requestBooking(ev){ev.preventDefault();const rid=Number(document.getElementById('bookResource').value),student=document.getElementById('bookName').value.trim(),date=document.getElementById('bookDate').value,start=Number(document.getElementById('startHour').value),end=Number(document.getElementById('endHour').value);if(!data.resources.some(r=>r.id===rid)){message('bookingMsg','Please select a valid resource.','error');return}if(start<0||start>23||end<1||end>24||start>=end){message('bookingMsg','Invalid time. Use start 0–23 and end 1–24, with end after start.','error');return}if(conflict(rid,date,start,end)){message('bookingMsg','Resource already booked/requested for an overlapping time.','error');return}data.bookings.push({id:nextId(data.bookings),resourceId:rid,student,date,start,end,status:'Pending'});ev.target.reset();message('bookingMsg','Booking request submitted! Status: Pending.','success-msg');saveData()}
+function processBooking(id,status){const b=data.bookings.find(x=>x.id===id);if(!b||b.status!=='Pending')return;if(status==='Approved'&&data.bookings.some(x=>x.id!==id&&x.resourceId===b.resourceId&&x.date===b.date&&x.status==='Approved'&&b.start<x.end&&x.start<b.end)){alert('Cannot approve: an approved booking has a time conflict.');return}b.status=status;saveData()}
+renderAll();
+</script>
+</body>
+</html>
